@@ -1,49 +1,54 @@
+# frozen_string_literal: true
+
 class TvShowsController < ApplicationController
   before_action :authenticate_user!
+  before_action :set_tv_show, only: %i[show update destroy]
 
   def index
     @tv_shows = TvShow.all
     respond_to do |format|
-      format.json { render :json => @tv_shows }
+      format.json { render json: @tv_shows }
     end
   end
 
   def show
-    @tv_show = TvShow.find(params[:id])
     respond_to do |format|
-      format.json { render :json => @tv_show }
+      format.json { render json: @tv_show }
     end
   end
 
   def create
     @tv_show = TvShow.new(tv_show_params)
     @tv_show.user_id = current_user.id
-    if @tv_show.save
-      respond_to do |format|
-        format.json { render :json => @tv_show }
-      end
+    return unless @tv_show.save
+
+    respond_to do |format|
+      format.json { render json: @tv_show }
     end
   end
 
   def update
-    @tv_show = TvShow.find(params[:id])
-    if @tv_show.update_attributes(tv_show_params)
-      respond_to do |format|
-        format.json { render :json => @tv_show }
-      end
+    return unless @tv_show.update(tv_show_params)
+
+    respond_to do |format|
+      format.json { render json: @tv_show }
     end
   end
 
   def destroy
-    @tv_show = TvShow.find(params[:id])
     @tv_show.delete
     respond_to do |format|
-      format.json { render :json => @tv_show }
+      format.json { render json: @tv_show }
     end
   end
 
   private
+
+  def set_tv_show
+    @tv_show = TvShow.find(params[:id])
+  end
+
   def tv_show_params
-    params.require('tv_show').permit('title')
+    params.require(:tv_show).permit(:title)
   end
 end
