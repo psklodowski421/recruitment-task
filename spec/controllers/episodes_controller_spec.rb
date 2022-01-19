@@ -1,101 +1,86 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe EpisodesController, :type => :controller do
-  let!(:tv_show) { TvShow.create! }
+RSpec.describe EpisodesController, type: :controller do
+  let!(:tv_show) { create :tv_show, user: user }
+  let(:user) { create :user }
 
   before do
-    user = User.create!(email: 'foo@example.com', password: '12345678')
     sign_in user
   end
 
-  describe "GET #index" do
-    it "responds successfully with an HTTP 200 status code" do
-      get :index, params: {tv_show_id: tv_show.id}, :format => :json
+  describe 'GET #index' do
+    let!(:episode1) { create :episode, tv_show: tv_show }
+    let!(:episode2) { create :episode, tv_show: tv_show }
 
-      expect(response).to be_successful
-      expect(response).to have_http_status(200)
-    end
+    subject { get :index, params: { tv_show_id: tv_show.id }, format: :json }
 
-    it "loads all of the episodes into @episodes" do
-      episode1, episode2 = Episode.create!(tv_show_id: tv_show.id), Episode.create!(tv_show_id: tv_show.id)
-      get :index, params: {tv_show_id: tv_show.id}, :format => :json
+    it_behaves_like 'responds successfully with an HTTP 200 status code'
 
-      # expect(assigns(:episodes)).to match_array([episode1, episode2])
+    it 'return count of episodes' do
+      expect(JSON.parse(subject.body).count).to eq 2
     end
   end
 
-  describe "GET #show" do
-    let(:episode) { Episode.create!(tv_show_id: tv_show.id) }
+  describe 'GET #show' do
+    let(:episode) { create :episode, tv_show: tv_show }
 
-    it "responds successfully with an HTTP 200 status code" do
-      get :show, params: {id: episode.id, tv_show_id: tv_show.id}, :format => :json
+    subject { get :show, params: { id: episode.id, tv_show_id: tv_show.id }, format: :json }
 
-      expect(response).to be_successful
-      expect(response).to have_http_status(200)
-    end
+    it_behaves_like 'responds successfully with an HTTP 200 status code'
 
-    it "loads all of the episodes into @episodes" do
-      get :show, params: {id: episode.id, tv_show_id: tv_show.id}, :format => :json
-
-      # expect(assigns(:episode)).to match(episode)
+    it 'return episode' do
+      expect(JSON.parse(subject.body)['id']).to eq episode.id
     end
   end
 
-  describe "POST #create" do
+  describe 'POST #create' do
     let(:params) { { title: 'House' } }
 
-    it "responds successfully with an HTTP 200 status code" do
-      request.accept = "application/json"
-      post :create, params: { tv_show_id: tv_show.id, episode: params}
+    subject { post :create, params: { tv_show_id: tv_show.id, episode: params } }
 
-      expect(response).to be_successful
-      expect(response).to have_http_status(200)
+    before do
+      request.accept = 'application/json'
     end
 
-    it "respond with created tv show" do
-      request.accept = "application/json"
-      post :create, params: {tv_show_id: tv_show.id, episode: params}
+    it_behaves_like 'responds successfully with an HTTP 200 status code'
 
-      expect(response.body).to include('House')
+    it 'respond with created tv show' do
+      expect(JSON.parse(subject.body)['title']).to eq('House')
     end
   end
 
-  describe "PUT #update" do
-    let(:episode) { Episode.create!(title: 'Foo', tv_show_id: tv_show.id) }
+  describe 'PUT #update' do
+    let(:episode) { create :episode, tv_show: tv_show, title: 'Foo' }
     let(:params) { { title: 'House' } }
 
-    it "responds successfully with an HTTP 200 status code" do
-      request.accept = "application/json"
-      put :update, params: {id: episode.id, tv_show_id: tv_show.id, episode: params}
+    subject { put :update, params: { id: episode.id, tv_show_id: tv_show.id, episode: params } }
 
-      expect(response).to be_successful
-      expect(response).to have_http_status(200)
+    before do
+      request.accept = 'application/json'
     end
 
-    it "respond with updated tv show" do
-      request.accept = "application/json"
-      put :update, params: {id: episode.id, tv_show_id: tv_show.id, episode: params}
+    it_behaves_like 'responds successfully with an HTTP 200 status code'
 
-      expect(response.body).to include('House')
+    it 'respond with updated tv show' do
+      expect(JSON.parse(subject.body)['title']).to eq('House')
     end
   end
 
   describe 'DELETE #destroy' do
-    let(:episode) { Episode.create!(title: 'House', tv_show_id: tv_show.id) }
+    let(:episode) { create :episode, tv_show: tv_show, title: 'House' }
 
-    it "responds successfully with an HTTP 200 status code" do
-      request.accept = "application/json"
-      delete :destroy, params: {id: episode.id, tv_show_id: tv_show.id}
+    subject { delete :destroy, params: { id: episode.id, tv_show_id: tv_show.id } }
 
-      expect(response).to be_successful
-      expect(response).to have_http_status(200)
+    before do
+      request.accept = 'application/json'
     end
 
-    it "respond with deleted tv show" do
-      request.accept = "application/json"
-      delete :destroy, params: {id: episode.id, tv_show_id: tv_show.id}
+    it_behaves_like 'responds successfully with an HTTP 200 status code'
 
-      expect(response.body).to include('House')
+    it 'respond with deleted tv show' do
+      expect(JSON.parse(subject.body)['title']).to eq('House')
     end
   end
 end
